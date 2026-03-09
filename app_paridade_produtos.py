@@ -2021,6 +2021,50 @@ if dashboard_data:
         font-size: 1rem !important;
         font-weight: 600 !important;
     }
+    
+    /* Transição Fade para alternância */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-transition {
+        animation: fadeIn 0.8s ease-in-out;
+    }
+    
+    /* Container horizontal com scroll */
+    .horizontal-scroll {
+        display: flex;
+        overflow-x: auto;
+        gap: 1rem;
+        padding: 1rem 0;
+        scrollbar-width: thin;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .horizontal-scroll::-webkit-scrollbar {
+        height: 8px;
+    }
+    
+    .horizontal-scroll::-webkit-scrollbar-track {
+        background: rgba(30, 41, 59, 0.5);
+        border-radius: 4px;
+    }
+    
+    .horizontal-scroll::-webkit-scrollbar-thumb {
+        background: #10b981;
+        border-radius: 4px;
+    }
+    
+    .product-card-horizontal {
+        min-width: 280px;
+        flex-shrink: 0;
+        transition: transform 0.2s ease;
+    }
+    
+    .product-card-horizontal:hover {
+        transform: translateY(-4px);
+    }
     </style>
     """, unsafe_allow_html=True)
     
@@ -2070,11 +2114,58 @@ if dashboard_data:
         ''', unsafe_allow_html=True)
     
     # ========================================================================
-    # RANKING DINÂMICO - TOP 3 PRODUTOS
+    # CONTROLE DE ALTERNÂNCIA VHP/CRISTAL
+    # ========================================================================
+    col_control1, col_control2 = st.columns([1, 3])
+    with col_control1:
+        auto_alternar = st.checkbox("🔄 Alternância Automática (10s)", value=True, help="Alterna automaticamente entre VHP e Cristal a cada 10 segundos")
+    
+    with col_control2:
+        if not auto_alternar:
+            base_selecionada = st.radio(
+                "Selecione a Base de Paridade:",
+                options=["VHP", "Cristal"],
+                horizontal=True,
+                index=0,
+                help="Escolha qual base de paridade visualizar"
+            )
+        else:
+            # Sistema de alternância automática
+            import time
+            if 'ultima_alternancia' not in st.session_state:
+                st.session_state.ultima_alternancia = time.time()
+                st.session_state.base_atual = 'VHP'
+            
+            tempo_atual = time.time()
+            tempo_decorrido = tempo_atual - st.session_state.ultima_alternancia
+            
+            if tempo_decorrido >= 10:
+                st.session_state.base_atual = 'Cristal' if st.session_state.base_atual == 'VHP' else 'VHP'
+                st.session_state.ultima_alternancia = tempo_atual
+                tempo_decorrido = 0
+                # Força refresh da página
+                st.rerun()
+            
+            base_selecionada = st.session_state.base_atual
+            tempo_restante = 10 - int(tempo_decorrido)
+            st.caption(f"🔄 Base atual: **{base_selecionada}** (próxima alternância em {tempo_restante}s)")
+            
+            # Auto-refresh usando JavaScript
+            st.markdown(f"""
+            <script>
+            setTimeout(function() {{
+                window.location.reload();
+            }}, {tempo_restante * 1000});
+            </script>
+            """, unsafe_allow_html=True)
+    
+    # ========================================================================
+    # RANKING DINÂMICO - TOP 3 PRODUTOS (FIXO)
     # ========================================================================
     if vhp_saca_list:
-        st.markdown("### 🏆 Ranking - Top Produtos por Paridade")
+        st.markdown("### 🏆 Top 3 Produtos - Melhores Paridades")
         
+        # Usa VHP para o top 3 fixo
         vhp_sorted = sorted(vhp_saca_list, key=lambda x: x[1], reverse=True)
         top_3 = vhp_sorted[:3]
         
@@ -2135,10 +2226,224 @@ if dashboard_data:
     st.markdown("---")
     
     # ========================================================================
-    # RANKING COMPLETO - TABELA DINÂMICA
+    # GRÁFICO DE RANKING DINÂMICO (ALTERNA COM A BASE)
+    # ========================================================================
+    if vhp_saca_list or cristal_saca_list:
+        if base_selecionada == 'VHP' and vhp_saca_list:
+            st.markdown("### 📈 Ranking - Equivalente VHP (R$/saca PVU)")
+            lista_ranking = sorted(vhp_saca_list, key=lambda x: x[1], reverse=True)
+            produtos_ranking = [p[0] for p in lista_ranking]
+            valores_ranking = [p[1] for p in lista_ranking]
+            titulo_grafico = "Ranking - Equivalente VHP (R$/saca PVU)"
+        elif base_selecionada == 'Cristal' and cristal_saca_list:
+            st.markdown("### 📈 Ranking - Equivalente Cristal (R$/saca PVU)")
+            lista_ranking = sorted(cristal_saca_list, key=lambda x: x[1], reverse=True)
+            produtos_ranking = [p[0] for p in lista_ranking]
+            valores_ranking = [p[1] for p in lista_ranking]
+            titulo_grafico = "Ranking - Equivalente Cristal (R$/saca PVU)"
+        else:
+            lista_ranking = []
+            produtos_ranking = []
+            valores_ranking = []
+            titulo_grafico = ""
+        
+        if produtos_ranking and valores_ranking:
+            # Define cores baseadas no tipo
+            cores_ranking = []
+            for produto in produtos_ranking:
+                produto_data = next((d for d in dashboard_data_filtrado if d['Produto'] == produto), None)
+                if produto_data:
+                    if produto_data.get('Tipo') == 'Etanol':
+                        cores_ranking.append('#3b82f6')
+                    else:
+                        cores_ranking.append('#f59e0b')
+                else:
+                    cores_ranking.append('#6b7280')
+            
+            fig_ranking = go.Figure(data=[go.Bar(
+                y=produtos_ranking,
+                x=valores_ranking,
+                orientation='h',
+                marker=dict(color=cores_ranking),
+                text=[f"R$ {fmt_br(v)}" for v in valores_ranking],
+                textposition='outside',
+                hovertemplate='<b>%{y}</b><br>Paridade: R$ %{x:,.2f}/saca<extra></extra>'
+            )])
+            
+            fig_ranking.update_layout(
+                title=dict(text=titulo_grafico, font=dict(size=18, color='#ffffff')),
+                xaxis_title=dict(text="Paridade (R$/saca)", font=dict(size=14, color='#ffffff')),
+                yaxis_title="",
+                height=400,
+                showlegend=False,
+                plot_bgcolor='rgba(0,0,0,0)',
+                paper_bgcolor='rgba(0,0,0,0)',
+                font=dict(color='#ffffff', size=12),
+                xaxis=dict(gridcolor='rgba(255,255,255,0.1)', showgrid=True, linewidth=1),
+                yaxis=dict(gridcolor='rgba(255,255,255,0.1)', showgrid=False, tickfont=dict(size=12)),
+                margin=dict(l=10, r=10, t=50, b=40)
+            )
+            
+            st.plotly_chart(fig_ranking, use_container_width=True)
+            
+            # Legenda
+            col_leg1, col_leg2 = st.columns(2)
+            with col_leg1:
+                st.markdown("🔵 **Etanol**")
+            with col_leg2:
+                st.markdown("🟠 **Açúcar**")
+    
+    st.markdown("---")
+    
+    # ========================================================================
+    # COMPARAÇÃO AÇÚCAR vs ETANOL (NA MESMA BASE)
+    # ========================================================================
+    if base_selecionada == 'VHP' and vhp_saca_list:
+        # Separa açúcar e etanol
+        acucar_vhp = [(d['Produto'], d['VHP R$/saca PVU']) for d in dashboard_data_filtrado 
+                     if d.get('VHP R$/saca PVU') is not None and d.get('Tipo') == 'Açúcar']
+        etanol_vhp = [(d['Produto'], d['VHP R$/saca PVU']) for d in dashboard_data_filtrado 
+                      if d.get('VHP R$/saca PVU') is not None and d.get('Tipo') == 'Etanol']
+        
+        if acucar_vhp and etanol_vhp:
+            melhor_acucar = max(acucar_vhp, key=lambda x: x[1])
+            melhor_etanol = max(etanol_vhp, key=lambda x: x[1])
+            diferenca = melhor_acucar[1] - melhor_etanol[1]
+            
+            st.markdown("### 🍬⚖️⛽ Comparação: Melhor Açúcar vs Melhor Etanol (Base VHP)")
+            
+            col_comp1, col_comp2, col_comp3 = st.columns([2, 1, 2])
+            with col_comp1:
+                st.markdown(f"**🍬 {melhor_acucar[0]}**")
+                st.markdown(f"### R$ {fmt_br(melhor_acucar[1])}/saca")
+            with col_comp2:
+                st.markdown("### vs")
+                diff_color = '#10b981' if diferenca > 0 else '#ef4444'
+                diff_arrow = '↑' if diferenca > 0 else '↓'
+                st.markdown(f'<div style="text-align: center; padding: 1rem; background: rgba(30, 41, 59, 0.8); border-radius: 8px; border: 2px solid {diff_color};"><div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem;">DIFERENÇA</div><div style="font-size: 1.5rem; font-weight: 800; color: {diff_color};">{diff_arrow} R$ {fmt_br(abs(diferenca))}</div></div>', unsafe_allow_html=True)
+            with col_comp3:
+                st.markdown(f"**⛽ {melhor_etanol[0]}**")
+                st.markdown(f"### R$ {fmt_br(melhor_etanol[1])}/saca")
+    
+    elif base_selecionada == 'Cristal' and cristal_saca_list:
+        # Separa açúcar e etanol
+        acucar_cristal = [(d['Produto'], d['Cristal R$/saca PVU']) for d in dashboard_data_filtrado 
+                         if d.get('Cristal R$/saca PVU') is not None and d.get('Tipo') == 'Açúcar']
+        etanol_cristal = [(d['Produto'], d['Cristal R$/saca PVU']) for d in dashboard_data_filtrado 
+                          if d.get('Cristal R$/saca PVU') is not None and d.get('Tipo') == 'Etanol']
+        
+        if acucar_cristal and etanol_cristal:
+            melhor_acucar = max(acucar_cristal, key=lambda x: x[1])
+            melhor_etanol = max(etanol_cristal, key=lambda x: x[1])
+            diferenca = melhor_acucar[1] - melhor_etanol[1]
+            
+            st.markdown("### 🍬⚖️⛽ Comparação: Melhor Açúcar vs Melhor Etanol (Base Cristal)")
+            
+            col_comp1, col_comp2, col_comp3 = st.columns([2, 1, 2])
+            with col_comp1:
+                st.markdown(f"**🍬 {melhor_acucar[0]}**")
+                st.markdown(f"### R$ {fmt_br(melhor_acucar[1])}/saca")
+            with col_comp2:
+                st.markdown("### vs")
+                diff_color = '#10b981' if diferenca > 0 else '#ef4444'
+                diff_arrow = '↑' if diferenca > 0 else '↓'
+                st.markdown(f'<div style="text-align: center; padding: 1rem; background: rgba(30, 41, 59, 0.8); border-radius: 8px; border: 2px solid {diff_color};"><div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem;">DIFERENÇA</div><div style="font-size: 1.5rem; font-weight: 800; color: {diff_color};">{diff_arrow} R$ {fmt_br(abs(diferenca))}</div></div>', unsafe_allow_html=True)
+            with col_comp3:
+                st.markdown(f"**⛽ {melhor_etanol[0]}**")
+                st.markdown(f"### R$ {fmt_br(melhor_etanol[1])}/saca")
+    
+    st.markdown("---")
+    
+    # ========================================================================
+    # TODOS OS PRODUTOS EM FILEIRA HORIZONTAL (ALTERNA COM A BASE)
+    # ========================================================================
+    if base_selecionada == 'VHP' and vhp_saca_list:
+        st.markdown("### 📊 Todos os Produtos - Base VHP")
+        lista_produtos = sorted(vhp_saca_list, key=lambda x: x[1], reverse=True)
+    elif base_selecionada == 'Cristal' and cristal_saca_list:
+        st.markdown("### 📊 Todos os Produtos - Base Cristal")
+        lista_produtos = sorted(cristal_saca_list, key=lambda x: x[1], reverse=True)
+    else:
+        lista_produtos = []
+    
+    if lista_produtos:
+        # Cria container com scroll horizontal
+        st.markdown("""
+        <style>
+        .horizontal-scroll {
+            display: flex;
+            overflow-x: auto;
+            gap: 1rem;
+            padding: 1rem 0;
+            scrollbar-width: thin;
+        }
+        .horizontal-scroll::-webkit-scrollbar {
+            height: 8px;
+        }
+        .horizontal-scroll::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 4px;
+        }
+        .horizontal-scroll::-webkit-scrollbar-thumb {
+            background: #10b981;
+            border-radius: 4px;
+        }
+        .product-card-horizontal {
+            min-width: 280px;
+            flex-shrink: 0;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        # Cria cards em container horizontal
+        cards_html = '<div class="horizontal-scroll">'
+        
+        for produto, valor in lista_produtos:
+            produto_data = next((d for d in dashboard_data_filtrado if d['Produto'] == produto), None)
+            if produto_data:
+                # Determina cor baseada no tipo
+                if produto_data.get('Tipo') == 'Etanol':
+                    border_color = '#3b82f6'
+                    bg_gradient = 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(30, 41, 59, 0.95) 100%)'
+                else:
+                    border_color = '#f59e0b'
+                    bg_gradient = 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(30, 41, 59, 0.95) 100%)'
+                
+                # Formata valores
+                valor_formatado = fmt_br(valor)
+                if base_selecionada == 'VHP':
+                    pvu_formatado = fmt_br(produto_data.get('VHP c/lb PVU', 0))
+                    fob_formatado = fmt_br(produto_data.get('VHP c/lb FOB', 0))
+                    base_texto = 'VHP'
+                else:
+                    pvu_formatado = fmt_br(produto_data.get('Cristal c/lb PVU', 0))
+                    fob_formatado = fmt_br(produto_data.get('Cristal c/lb FOB', 0))
+                    base_texto = 'Cristal'
+                
+                card_html = (
+                    '<div class="product-card-horizontal" style="background: ' + bg_gradient + 
+                    '; border-left: 4px solid ' + border_color + 
+                    '; border-radius: 8px; padding: 1.25rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);">' +
+                    '<div style="font-size: 0.85rem; font-weight: 700; color: #ffffff; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px;">' + produto + '</div>' +
+                    '<div style="font-size: 1.75rem; font-weight: 800; color: #ffffff; margin: 0.5rem 0; line-height: 1.2;">R$ ' + valor_formatado + '</div>' +
+                    '<div style="font-size: 0.7rem; color: #64748b; margin-bottom: 0.75rem; font-style: italic;">Base ' + base_texto + ' (R$/saca PVU)</div>' +
+                    '<div style="display: flex; justify-content: space-between; margin: 0.4rem 0; font-size: 0.8rem;"><span style="color: #94a3b8;">PVU:</span><span style="color: #ffffff; font-weight: 600;">' + pvu_formatado + ' c/lb</span></div>' +
+                    '<div style="display: flex; justify-content: space-between; margin: 0.4rem 0; font-size: 0.8rem;"><span style="color: #94a3b8;">FOB:</span><span style="color: #ffffff; font-weight: 600;">' + fob_formatado + ' c/lb</span></div>' +
+                    '</div>'
+                )
+                cards_html += card_html
+        
+        cards_html += '</div>'
+        st.markdown(cards_html, unsafe_allow_html=True)
+    
+    st.markdown("---")
+    
+    # ========================================================================
+    # RANKING COMPLETO - TABELA DINÂMICA (MANTIDO PARA REFERÊNCIA)
     # ========================================================================
     if vhp_saca_list:
-        st.markdown("### 📊 Ranking Completo de Produtos")
+        with st.expander("📋 Tabela Completa de Ranking (Referência)", expanded=False):
+            st.markdown("### 📊 Ranking Completo de Produtos")
         
         # Cria DataFrame para ranking
         ranking_data = []
