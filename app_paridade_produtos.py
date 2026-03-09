@@ -2102,36 +2102,33 @@ if dashboard_data:
                         bg_gradient = 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(30, 41, 59, 0.95) 100%)'
                         badge = '<div style="position: absolute; top: 1rem; right: 1rem; background: #3b82f6; color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">#3</div>'
                     
+                    # Formata valores antes de inserir no HTML
+                    valor_formatado = fmt_br(valor)
+                    pvu_formatado = fmt_br(produto_data.get('VHP c/lb PVU', 0))
+                    fob_formatado = fmt_br(produto_data.get('VHP c/lb FOB', 0))
+                    
                     # Arbitragem HTML
                     arbitragem_html = ''
                     if arbitragem is not None:
+                        arbitragem_formatado = fmt_br(arbitragem)
                         arbitragem_color = '#10b981' if arbitragem > 0 else '#ef4444'
                         arbitragem_arrow = '↑' if arbitragem > 0 else '↓'
-                        arbitragem_html = f'''
-                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                            <div style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px;">Arbitragem</div>
-                            <div style="font-size: 1rem; font-weight: 700; color: {arbitragem_color};">
-                                {arbitragem_arrow} {fmt_br(arbitragem)} c/lb
-                            </div>
-                        </div>'''
+                        arbitragem_html = f'<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);"><div style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px;">Arbitragem</div><div style="font-size: 1rem; font-weight: 700; color: {arbitragem_color};">{arbitragem_arrow} {arbitragem_formatado} c/lb</div></div>'
                     
-                    card_html = f'''
-                    <div style="background: {bg_gradient}; border-left: 4px solid {border_color}; border-radius: 8px; padding: 1.5rem; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 1rem;">
-                        {badge}
-                        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">{produto}</div>
-                        <div style="font-size: 2rem; font-weight: 800; color: #ffffff; margin: 0.75rem 0; line-height: 1.2;">R$ {fmt_br(valor)}</div>
-                        <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem; font-style: italic;">Equivalente VHP (R$/saca PVU)</div>
-                        <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;">
-                            <span style="color: #94a3b8;">PVU:</span>
-                            <span style="color: #ffffff; font-weight: 600;">{fmt_br(produto_data.get('VHP c/lb PVU', 0))} c/lb</span>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;">
-                            <span style="color: #94a3b8;">FOB:</span>
-                            <span style="color: #ffffff; font-weight: 600;">{fmt_br(produto_data.get('VHP c/lb FOB', 0))} c/lb</span>
-                        </div>
-                        {arbitragem_html}
-                    </div>
-                    '''
+                    # Monta o HTML do card de forma segura
+                    card_html = (
+                        '<div style="background: ' + bg_gradient + 
+                        '; border-left: 4px solid ' + border_color + 
+                        '; border-radius: 8px; padding: 1.5rem; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 1rem;">' +
+                        badge +
+                        '<div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">' + produto + '</div>' +
+                        '<div style="font-size: 2rem; font-weight: 800; color: #ffffff; margin: 0.75rem 0; line-height: 1.2;">R$ ' + valor_formatado + '</div>' +
+                        '<div style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem; font-style: italic;">Equivalente VHP (R$/saca PVU)</div>' +
+                        '<div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;"><span style="color: #94a3b8;">PVU:</span><span style="color: #ffffff; font-weight: 600;">' + pvu_formatado + ' c/lb</span></div>' +
+                        '<div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;"><span style="color: #94a3b8;">FOB:</span><span style="color: #ffffff; font-weight: 600;">' + fob_formatado + ' c/lb</span></div>' +
+                        arbitragem_html +
+                        '</div>'
+                    )
                     
                     st.markdown(card_html, unsafe_allow_html=True)
     
@@ -2168,13 +2165,18 @@ if dashboard_data:
                     return ['background-color: rgba(245, 158, 11, 0.1);'] * len(row)
                 return [''] * len(row)
             
-            styled_df = df_ranking.style.apply(highlight_best, axis=1).format({
-                'Paridade (R$/saca)': '{:,.2f}',
-                'PVU (c/lb)': '{:,.2f}',
-                'FOB (c/lb)': '{:,.2f}'
-            }).hide_index()
+            # Formata os valores antes de criar o DataFrame
+            df_ranking['Paridade (R$/saca)'] = df_ranking['Paridade (R$/saca)'].apply(lambda x: f"{x:,.2f}")
+            df_ranking['PVU (c/lb)'] = df_ranking['PVU (c/lb)'].apply(lambda x: f"{x:,.2f}")
+            df_ranking['FOB (c/lb)'] = df_ranking['FOB (c/lb)'].apply(lambda x: f"{x:,.2f}")
             
-            st.dataframe(styled_df, use_container_width=True, height=400)
+            # Aplica estilo sem usar hide_index() que pode causar erro
+            try:
+                styled_df = df_ranking.style.apply(highlight_best, axis=1)
+                st.dataframe(styled_df, use_container_width=True, height=400)
+            except:
+                # Fallback: mostra DataFrame sem estilo se houver erro
+                st.dataframe(df_ranking, use_container_width=True, height=400)
     
     st.markdown("---")
     
@@ -2297,23 +2299,25 @@ if dashboard_data:
                                 bg_gradient = 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(30, 41, 59, 0.95) 100%)'
                                 badge = ''
                             
-                            card_html = f'''
-                            <div style="background: {bg_gradient}; border-left: 4px solid {border_color}; border-radius: 8px; padding: 1.5rem; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 1rem;">
-                                {badge}
-                                <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">{produto}</div>
-                                <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">EQUIVALENTE VHP</div>
-                                <div style="font-size: 2rem; font-weight: 800; color: #ffffff; margin: 0.75rem 0; line-height: 1.2;">R$ {fmt_br(valor)}</div>
-                                <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem; font-style: italic;">Equivalente em Açúcar VHP (R$/saca PVU)</div>
-                                <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;">
-                                    <span style="color: #94a3b8;">VHP PVU:</span>
-                                    <span style="color: #ffffff; font-weight: 600;">{fmt_br(produto_data.get('VHP c/lb PVU', 0))} c/lb</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;">
-                                    <span style="color: #94a3b8;">VHP FOB:</span>
-                                    <span style="color: #ffffff; font-weight: 600;">{fmt_br(produto_data.get('VHP c/lb FOB', 0))} c/lb</span>
-                                </div>
-                            </div>
-                            '''
+                            # Formata valores antes de inserir no HTML
+                            valor_formatado = fmt_br(valor)
+                            pvu_formatado = fmt_br(produto_data.get('VHP c/lb PVU', 0))
+                            fob_formatado = fmt_br(produto_data.get('VHP c/lb FOB', 0))
+                            
+                            # Monta o HTML do card de forma segura
+                            card_html = (
+                                '<div style="background: ' + bg_gradient + 
+                                '; border-left: 4px solid ' + border_color + 
+                                '; border-radius: 8px; padding: 1.5rem; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 1rem;">' +
+                                badge +
+                                '<div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">' + produto + '</div>' +
+                                '<div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">EQUIVALENTE VHP</div>' +
+                                '<div style="font-size: 2rem; font-weight: 800; color: #ffffff; margin: 0.75rem 0; line-height: 1.2;">R$ ' + valor_formatado + '</div>' +
+                                '<div style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem; font-style: italic;">Equivalente em Açúcar VHP (R$/saca PVU)</div>' +
+                                '<div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;"><span style="color: #94a3b8;">VHP PVU:</span><span style="color: #ffffff; font-weight: 600;">' + pvu_formatado + ' c/lb</span></div>' +
+                                '<div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;"><span style="color: #94a3b8;">VHP FOB:</span><span style="color: #ffffff; font-weight: 600;">' + fob_formatado + ' c/lb</span></div>' +
+                                '</div>'
+                            )
                             
                             st.markdown(card_html, unsafe_allow_html=True)
         
@@ -2444,37 +2448,39 @@ if dashboard_data:
                                 bg_gradient = 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(30, 41, 59, 0.95) 100%)'
                                 badge = ''
                             
+                            # Formata valores antes de inserir no HTML
+                            valor_formatado = fmt_br(valor)
+                            cristal_pvu_formatado = fmt_br(produto_data.get('Cristal c/lb PVU', 0))
+                            cristal_fob_formatado = fmt_br(produto_data.get('Cristal c/lb FOB', 0))
+                            
                             # HTML da arbitragem (se disponível)
                             arbitragem_html = ''
                             if arbitragem_vhp is not None:
+                                arbitragem_formatado = fmt_br(arbitragem_vhp)
                                 arbitragem_color = '#10b981' if arbitragem_vhp > 0 else '#ef4444'
                                 arbitragem_arrow = '↑' if arbitragem_vhp > 0 else '↓'
-                                arbitragem_html = f'''
-                                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
-                                    <div style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px;">Arbitragem: Cristal vs VHP</div>
-                                    <div style="font-size: 1rem; font-weight: 700; color: {arbitragem_color};">
-                                        {arbitragem_arrow} {fmt_br(arbitragem_vhp)} c/lb
-                                    </div>
-                                </div>'''
+                                arbitragem_html = (
+                                    '<div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">' +
+                                    '<div style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px;">Arbitragem: Cristal vs VHP</div>' +
+                                    '<div style="font-size: 1rem; font-weight: 700; color: ' + arbitragem_color + ';">' +
+                                    arbitragem_arrow + ' ' + arbitragem_formatado + ' c/lb</div></div>'
+                                )
                             
-                            card_html = f'''
-                            <div style="background: {bg_gradient}; border-left: 4px solid {border_color}; border-radius: 8px; padding: 1.5rem; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 1rem;">
-                                {badge}
-                                <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">{produto}</div>
-                                <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">EQUIVALENTE CRISTAL</div>
-                                <div style="font-size: 2rem; font-weight: 800; color: #ffffff; margin: 0.75rem 0; line-height: 1.2;">R$ {fmt_br(valor)}</div>
-                                <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem; font-style: italic;">Equivalente em Açúcar Cristal (R$/saca PVU)</div>
-                                <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;">
-                                    <span style="color: #94a3b8;">Cristal PVU:</span>
-                                    <span style="color: #ffffff; font-weight: 600;">{fmt_br(produto_data.get('Cristal c/lb PVU', 0))} c/lb</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;">
-                                    <span style="color: #94a3b8;">Cristal FOB:</span>
-                                    <span style="color: #ffffff; font-weight: 600;">{fmt_br(produto_data.get('Cristal c/lb FOB', 0))} c/lb</span>
-                                </div>
-                                {arbitragem_html}
-                            </div>
-                            '''
+                            # Monta o HTML do card de forma segura
+                            card_html = (
+                                '<div style="background: ' + bg_gradient + 
+                                '; border-left: 4px solid ' + border_color + 
+                                '; border-radius: 8px; padding: 1.5rem; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 1rem;">' +
+                                badge +
+                                '<div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">' + produto + '</div>' +
+                                '<div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">EQUIVALENTE CRISTAL</div>' +
+                                '<div style="font-size: 2rem; font-weight: 800; color: #ffffff; margin: 0.75rem 0; line-height: 1.2;">R$ ' + valor_formatado + '</div>' +
+                                '<div style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem; font-style: italic;">Equivalente em Açúcar Cristal (R$/saca PVU)</div>' +
+                                '<div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;"><span style="color: #94a3b8;">Cristal PVU:</span><span style="color: #ffffff; font-weight: 600;">' + cristal_pvu_formatado + ' c/lb</span></div>' +
+                                '<div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;"><span style="color: #94a3b8;">Cristal FOB:</span><span style="color: #ffffff; font-weight: 600;">' + cristal_fob_formatado + ' c/lb</span></div>' +
+                                arbitragem_html +
+                                '</div>'
+                            )
                             
                             st.markdown(card_html, unsafe_allow_html=True)
         
