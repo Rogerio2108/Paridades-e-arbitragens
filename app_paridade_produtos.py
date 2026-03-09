@@ -1689,200 +1689,251 @@ if result_etanol_hidratado_mi.get('values'):
     })
 
 if dashboard_data:
-    # CSS otimizado para tela de 85 polegadas - Visual Clean e Moderno
+    # CSS Dashboard Comercial Profissional - Visual Clean e Focado em Tomada de Decisão
     st.markdown("""
     <style>
-    /* Estilos globais para tela grande */
+    /* Estilos globais */
     .main .block-container {
-        padding-top: 3rem;
-        padding-bottom: 3rem;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
         max-width: 100%;
     }
     
-    /* Cards do dashboard - otimizados para visualização em tela grande */
+    /* Cards do dashboard - Visual comercial profissional */
     .dashboard-card {
-        background: linear-gradient(135deg, rgba(26, 32, 44, 0.95) 0%, rgba(30, 41, 59, 0.95) 100%);
-        border-radius: 20px;
-        padding: 2.5rem 3rem;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.2);
-        border-left: 8px solid;
-        margin-bottom: 2rem;
-        border: 2px solid rgba(255,255,255,0.08);
-        transition: all 0.3s ease;
-        min-height: 280px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
+        background: #1e293b;
+        border-radius: 12px;
+        padding: 1.75rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+        border-left: 4px solid;
+        margin-bottom: 1.5rem;
+        border-top: 1px solid rgba(255,255,255,0.1);
+        border-right: 1px solid rgba(255,255,255,0.1);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .dashboard-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, currentColor, transparent);
+        opacity: 0.3;
     }
     
     .dashboard-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.5), 0 4px 12px rgba(0,0,0,0.3);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
     }
     
     .dashboard-card-green {
         border-left-color: #10b981;
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(26, 32, 44, 0.95) 100%);
+    }
+    .dashboard-card-green::before {
+        background: linear-gradient(90deg, transparent, #10b981, transparent);
     }
     
     .dashboard-card-red {
         border-left-color: #ef4444;
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(26, 32, 44, 0.95) 100%);
+    }
+    .dashboard-card-red::before {
+        background: linear-gradient(90deg, transparent, #ef4444, transparent);
     }
     
     .dashboard-card-blue {
         border-left-color: #3b82f6;
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(26, 32, 44, 0.95) 100%);
+    }
+    .dashboard-card-blue::before {
+        background: linear-gradient(90deg, transparent, #3b82f6, transparent);
     }
     
     .dashboard-card-orange {
         border-left-color: #f59e0b;
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(26, 32, 44, 0.95) 100%);
+    }
+    .dashboard-card-orange::before {
+        background: linear-gradient(90deg, transparent, #f59e0b, transparent);
     }
     
     .dashboard-card-purple {
         border-left-color: #8b5cf6;
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(26, 32, 44, 0.95) 100%);
+    }
+    .dashboard-card-purple::before {
+        background: linear-gradient(90deg, transparent, #8b5cf6, transparent);
     }
     
     .dashboard-card-yellow {
         border-left-color: #eab308;
-        background: linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(26, 32, 44, 0.95) 100%);
+    }
+    .dashboard-card-yellow::before {
+        background: linear-gradient(90deg, transparent, #eab308, transparent);
     }
     
+    /* Badge de posição */
+    .position-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(0, 0, 0, 0.4);
+        padding: 0.4rem 0.8rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: #fff;
+        backdrop-filter: blur(4px);
+    }
+    
+    .position-badge.best {
+        background: rgba(16, 185, 129, 0.3);
+        border: 1px solid rgba(16, 185, 129, 0.5);
+    }
+    
+    /* Título do produto */
     .dashboard-title {
-        font-size: 1.8rem;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        line-height: 1.3;
+    }
+    
+    /* Preço principal - destaque comercial */
+    .dashboard-price {
+        font-size: 2.25rem;
         font-weight: 800;
         color: #ffffff;
-        margin-bottom: 1.5rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        text-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        margin: 0.75rem 0;
         line-height: 1.2;
+        letter-spacing: -0.5px;
     }
     
-    .dashboard-price {
-        font-size: 4.5rem;
-        font-weight: 900;
-        color: #ffffff;
-        margin: 1.5rem 0;
-        text-shadow: 0 4px 12px rgba(0,0,0,0.5);
-        line-height: 1.1;
-        letter-spacing: -1px;
-    }
-    
+    /* Métricas secundárias */
     .dashboard-metric {
-        font-size: 1.4rem;
+        font-size: 0.875rem;
         color: #cbd5e1;
-        margin: 0.8rem 0;
-        line-height: 1.6;
+        margin: 0.5rem 0;
+        line-height: 1.5;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
     
     .dashboard-metric-label {
-        font-weight: 600;
+        font-weight: 500;
         color: #94a3b8;
-        font-size: 1.1rem;
-        margin-right: 0.5rem;
+        font-size: 0.875rem;
     }
     
     .dashboard-metric-value {
-        font-weight: 700;
+        font-weight: 600;
         color: #ffffff;
-        font-size: 1.4rem;
+        font-size: 0.875rem;
     }
     
+    /* Seção de arbitragem */
     .dashboard-arbitrage {
-        font-size: 1.2rem;
-        margin-top: 1.5rem;
-        padding-top: 1.5rem;
-        border-top: 2px solid rgba(255,255,255,0.2);
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255,255,255,0.15);
     }
     
     .dashboard-arbitrage-label {
-        font-size: 0.95rem;
+        font-size: 0.75rem;
         color: #94a3b8;
         text-transform: uppercase;
-        margin-bottom: 0.5rem;
-        letter-spacing: 1px;
+        margin-bottom: 0.25rem;
+        letter-spacing: 0.5px;
         font-weight: 600;
     }
     
     .dashboard-arbitrage-value {
-        font-size: 1.8rem;
-        font-weight: 800;
+        font-size: 1.1rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
     
     .dashboard-arbitrage-positive {
         color: #10b981;
-        text-shadow: 0 2px 8px rgba(16, 185, 129, 0.4);
+    }
+    .dashboard-arbitrage-positive::before {
+        content: '↑';
+        font-size: 1rem;
     }
     
     .dashboard-arbitrage-negative {
         color: #ef4444;
-        text-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+    }
+    .dashboard-arbitrage-negative::before {
+        content: '↓';
+        font-size: 1rem;
     }
     
-    /* Melhorias para títulos e seções */
-    h1, h2, h3 {
-        font-weight: 800 !important;
-        letter-spacing: -0.5px !important;
+    /* Indicador de melhor opção */
+    .best-indicator {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: linear-gradient(135deg, #10b981, #059669);
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #fff;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
     }
     
+    /* Títulos de seção */
     h3 {
-        font-size: 2.5rem !important;
-        margin-bottom: 2rem !important;
-        margin-top: 3rem !important;
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 1.25rem !important;
+        margin-top: 2rem !important;
+        color: #ffffff !important;
     }
     
-    /* Espaçamento melhorado */
+    /* Espaçamento */
     .stMarkdown {
-        margin-bottom: 2rem;
-    }
-    
-    /* Sidebar melhorada para tela grande */
-    .css-1d391kg {
-        padding-top: 2rem;
-    }
-    
-    /* Inputs maiores na sidebar para tela grande */
-    .stNumberInput input {
-        font-size: 1.2rem !important;
-        padding: 0.75rem !important;
-    }
-    
-    .stNumberInput label {
-        font-size: 1.1rem !important;
-        font-weight: 600 !important;
-    }
-    
-    /* Melhor contraste e legibilidade */
-    .stExpander {
-        background-color: rgba(26, 32, 44, 0.6);
-        border-radius: 12px;
-        padding: 1.5rem;
         margin-bottom: 1.5rem;
     }
     
+    /* Sidebar */
+    .stNumberInput input {
+        font-size: 1rem !important;
+        padding: 0.5rem !important;
+    }
+    
+    .stNumberInput label {
+        font-size: 0.9rem !important;
+        font-weight: 500 !important;
+    }
+    
+    .stExpander {
+        background-color: rgba(30, 41, 59, 0.5);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
     .stExpander label {
-        font-size: 1.3rem !important;
-        font-weight: 700 !important;
-    }
-    
-    /* Títulos da sidebar maiores */
-    .sidebar .stMarkdown h3 {
-        font-size: 1.8rem !important;
-        margin-bottom: 1.5rem !important;
-    }
-    
-    .sidebar .stMarkdown h1 {
-        font-size: 2.2rem !important;
-        margin-bottom: 2rem !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
     }
     </style>
     """, unsafe_allow_html=True)
     
-    # Cards principais - Top 3 produtos por categoria
-    st.markdown("### 🎯 Resumo Executivo")
+    # Cards principais - Top produtos por categoria
+    st.markdown("### 🎯 Resumo Executivo - Paridades de Produtos")
+    st.caption("Visualização comparativa dos produtos com melhor paridade. Os valores são equivalentes em Açúcar VHP (R$/saca na Porta da Usina).")
     
     # Explicação sobre Arbitragem Implícita
     with st.expander("ℹ️ O que é Arbitragem Implícita?", expanded=False):
@@ -1955,25 +2006,39 @@ if dashboard_data:
                             else:
                                 color_class = 'blue'
                             
-                            # Adiciona badge de posição
-                            position_badge = f'<div style="position: absolute; top: 1rem; right: 1.5rem; background: rgba(0,0,0,0.3); padding: 0.5rem 1rem; border-radius: 20px; font-size: 1.2rem; font-weight: 700; color: #fff;">#{current_idx + 1}</div>' if current_idx < 3 else ''
+                            # Badge de posição
+                            if current_idx == 0:
+                                position_badge = '<div class="best-indicator">🏆 Melhor</div>'
+                            elif current_idx < 3:
+                                position_badge = f'<div class="position-badge">#{current_idx + 1}</div>'
+                            else:
+                                position_badge = ''
                             
-                            st.markdown(f"""
-                            <div class="dashboard-card dashboard-card-{color_class}" style="position: relative;">
+                            # HTML da arbitragem (se disponível)
+                            arbitragem_html = ''
+                            if arbitragem is not None:
+                                arbitragem_class = 'positive' if arbitragem > 0 else 'negative'
+                                arbitragem_html = f'''<div class="dashboard-arbitrage">
+                                    <div class="dashboard-arbitrage-label">Arbitragem Implícita</div>
+                                    <div class="dashboard-arbitrage-value dashboard-arbitrage-{arbitragem_class}">{fmt_br(arbitragem)} c/lb</div>
+                                </div>'''
+                            
+                            card_html = f'''<div class="dashboard-card dashboard-card-{color_class}">
                                 {position_badge}
                                 <div class="dashboard-title">{produto}</div>
                                 <div class="dashboard-price">R$ {fmt_br(valor)}</div>
                                 <div class="dashboard-metric">
-                                    <span class="dashboard-metric-label">PVU:</span> 
+                                    <span class="dashboard-metric-label">PVU:</span>
                                     <span class="dashboard-metric-value">{fmt_br(produto_data['VHP c/lb PVU'])} c/lb</span>
                                 </div>
                                 <div class="dashboard-metric">
-                                    <span class="dashboard-metric-label">FOB:</span> 
+                                    <span class="dashboard-metric-label">FOB:</span>
                                     <span class="dashboard-metric-value">{fmt_br(produto_data['VHP c/lb FOB'])} c/lb</span>
                                 </div>
-                                {f'<div class="dashboard-arbitrage"><div class="dashboard-arbitrage-label">Arbitragem Implícita</div><div class="dashboard-arbitrage-value dashboard-arbitrage-{"positive" if arbitragem and arbitragem > 0 else "negative"}">{fmt_br(arbitragem)} c/lb</div></div>' if arbitragem is not None else ''}
-                            </div>
-                            """, unsafe_allow_html=True)
+                                {arbitragem_html}
+                            </div>'''
+                            
+                            st.markdown(card_html, unsafe_allow_html=True)
     
     st.markdown("---")
     
@@ -2027,16 +2092,17 @@ if dashboard_data:
         )])
         
         fig_vhp.update_layout(
-            title=dict(text="Ranking - Equivalente VHP (R$/saca PVU)", font=dict(size=28, color='#ffffff', family='Arial Black')),
-            xaxis_title=dict(text="Equivalente VHP (R$/saca)", font=dict(size=20, color='#ffffff')),
+            title=dict(text="Ranking - Equivalente VHP (R$/saca PVU)", font=dict(size=18, color='#ffffff')),
+            xaxis_title=dict(text="Equivalente VHP (R$/saca)", font=dict(size=14, color='#ffffff')),
             yaxis_title="",
-            height=600,
+            height=450,
             showlegend=False,
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#ffffff', size=18),
-            xaxis=dict(gridcolor='rgba(255,255,255,0.15)', showgrid=True, linewidth=2, linecolor='rgba(255,255,255,0.2)'),
-            yaxis=dict(gridcolor='rgba(255,255,255,0.1)', showgrid=False, tickfont=dict(size=16))
+            font=dict(color='#ffffff', size=12),
+            xaxis=dict(gridcolor='rgba(255,255,255,0.1)', showgrid=True, linewidth=1),
+            yaxis=dict(gridcolor='rgba(255,255,255,0.1)', showgrid=False, tickfont=dict(size=12)),
+            margin=dict(l=10, r=10, t=50, b=40)
         )
         
         st.plotly_chart(fig_vhp, use_container_width=True)
@@ -2079,25 +2145,29 @@ if dashboard_data:
                             color = 'orange'
                         
                         with cols[col_idx]:
-                            highlight_style = 'box-shadow: 0 0 30px rgba(16, 185, 129, 0.6); border: 3px solid #10b981; transform: scale(1.02);' if is_best else ''
-                            position_badge = '<div style="position: absolute; top: 1rem; right: 1.5rem; background: rgba(16, 185, 129, 0.8); padding: 0.5rem 1rem; border-radius: 20px; font-size: 1.2rem; font-weight: 700; color: #fff;">🏆 MELHOR</div>' if is_best else ''
-                            st.markdown(f"""
-                            <div class="dashboard-card dashboard-card-{color}" style="position: relative; {highlight_style}">
+                            # Badge de melhor opção
+                            if is_best:
+                                position_badge = '<div class="best-indicator">🏆 Melhor</div>'
+                            else:
+                                position_badge = ''
+                            
+                            card_html = f'''<div class="dashboard-card dashboard-card-{color}">
                                 {position_badge}
                                 <div class="dashboard-title">{produto}</div>
-                                <div style="font-size: 1.1rem; color: #94a3b8; margin-bottom: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">EQUIVALENTE VHP</div>
+                                <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">EQUIVALENTE VHP</div>
                                 <div class="dashboard-price">R$ {fmt_br(valor)}</div>
-                                <div style="font-size: 1rem; color: #64748b; margin-bottom: 1.5rem; font-style: italic;">Equivalente em Açúcar VHP (R$/saca PVU)</div>
+                                <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem; font-style: italic;">Equivalente em Açúcar VHP (R$/saca PVU)</div>
                                 <div class="dashboard-metric">
-                                    <span class="dashboard-metric-label">VHP PVU:</span> 
+                                    <span class="dashboard-metric-label">VHP PVU:</span>
                                     <span class="dashboard-metric-value">{fmt_br(produto_data['VHP c/lb PVU'])} c/lb</span>
                                 </div>
                                 <div class="dashboard-metric">
-                                    <span class="dashboard-metric-label">VHP FOB:</span> 
+                                    <span class="dashboard-metric-label">VHP FOB:</span>
                                     <span class="dashboard-metric-value">{fmt_br(produto_data['VHP c/lb FOB'])} c/lb</span>
                                 </div>
-                            </div>
-                            """, unsafe_allow_html=True)
+                            </div>'''
+                            
+                            st.markdown(card_html, unsafe_allow_html=True)
         
         if max_valor:
             melhor = next((d for d in dashboard_data_filtrado if d['VHP R$/saca PVU'] == max_valor), None)
@@ -2156,16 +2226,17 @@ if dashboard_data:
         )])
         
         fig_cristal.update_layout(
-            title=dict(text="Ranking - Equivalente Cristal (R$/saca PVU)", font=dict(size=28, color='#ffffff', family='Arial Black')),
-            xaxis_title=dict(text="Equivalente Cristal (R$/saca)", font=dict(size=20, color='#ffffff')),
+            title=dict(text="Ranking - Equivalente Cristal (R$/saca PVU)", font=dict(size=18, color='#ffffff')),
+            xaxis_title=dict(text="Equivalente Cristal (R$/saca)", font=dict(size=14, color='#ffffff')),
             yaxis_title="",
-            height=600,
+            height=450,
             showlegend=False,
             plot_bgcolor='rgba(0,0,0,0)',
             paper_bgcolor='rgba(0,0,0,0)',
-            font=dict(color='#ffffff', size=18),
-            xaxis=dict(gridcolor='rgba(255,255,255,0.15)', showgrid=True, linewidth=2, linecolor='rgba(255,255,255,0.2)'),
-            yaxis=dict(gridcolor='rgba(255,255,255,0.1)', showgrid=False, tickfont=dict(size=16))
+            font=dict(color='#ffffff', size=12),
+            xaxis=dict(gridcolor='rgba(255,255,255,0.1)', showgrid=True, linewidth=1),
+            yaxis=dict(gridcolor='rgba(255,255,255,0.1)', showgrid=False, tickfont=dict(size=12)),
+            margin=dict(l=10, r=10, t=50, b=40)
         )
         
         st.plotly_chart(fig_cristal, use_container_width=True)
@@ -2211,26 +2282,39 @@ if dashboard_data:
                             if produto_data['VHP c/lb PVU'] is not None and produto_data['Cristal c/lb PVU'] is not None:
                                 arbitragem_vhp = produto_data['Cristal c/lb PVU'] - produto_data['VHP c/lb PVU']
                             
-                            highlight_style = 'box-shadow: 0 0 30px rgba(16, 185, 129, 0.6); border: 3px solid #10b981; transform: scale(1.02);' if is_best else ''
-                            position_badge = '<div style="position: absolute; top: 1rem; right: 1.5rem; background: rgba(16, 185, 129, 0.8); padding: 0.5rem 1rem; border-radius: 20px; font-size: 1.2rem; font-weight: 700; color: #fff;">🏆 MELHOR</div>' if is_best else ''
-                            st.markdown(f"""
-                            <div class="dashboard-card dashboard-card-{color}" style="position: relative; {highlight_style}">
+                            # Badge de melhor opção
+                            if is_best:
+                                position_badge = '<div class="best-indicator">🏆 Melhor</div>'
+                            else:
+                                position_badge = ''
+                            
+                            # HTML da arbitragem (se disponível)
+                            arbitragem_html = ''
+                            if arbitragem_vhp is not None:
+                                arbitragem_class = 'positive' if arbitragem_vhp > 0 else 'negative'
+                                arbitragem_html = f'''<div class="dashboard-arbitrage">
+                                    <div class="dashboard-arbitrage-label">Arbitragem: Cristal vs VHP</div>
+                                    <div class="dashboard-arbitrage-value dashboard-arbitrage-{arbitragem_class}">{fmt_br(arbitragem_vhp)} c/lb</div>
+                                </div>'''
+                            
+                            card_html = f'''<div class="dashboard-card dashboard-card-{color}">
                                 {position_badge}
                                 <div class="dashboard-title">{produto}</div>
-                                <div style="font-size: 1.1rem; color: #94a3b8; margin-bottom: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">EQUIVALENTE CRISTAL</div>
+                                <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">EQUIVALENTE CRISTAL</div>
                                 <div class="dashboard-price">R$ {fmt_br(valor)}</div>
-                                <div style="font-size: 1rem; color: #64748b; margin-bottom: 1.5rem; font-style: italic;">Equivalente em Açúcar Cristal (R$/saca PVU)</div>
+                                <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem; font-style: italic;">Equivalente em Açúcar Cristal (R$/saca PVU)</div>
                                 <div class="dashboard-metric">
-                                    <span class="dashboard-metric-label">Cristal PVU:</span> 
+                                    <span class="dashboard-metric-label">Cristal PVU:</span>
                                     <span class="dashboard-metric-value">{fmt_br(produto_data['Cristal c/lb PVU'])} c/lb</span>
                                 </div>
                                 <div class="dashboard-metric">
-                                    <span class="dashboard-metric-label">Cristal FOB:</span> 
+                                    <span class="dashboard-metric-label">Cristal FOB:</span>
                                     <span class="dashboard-metric-value">{fmt_br(produto_data['Cristal c/lb FOB'])} c/lb</span>
                                 </div>
-                                {f'<div class="dashboard-arbitrage"><div class="dashboard-arbitrage-label">Arbitragem: Cristal vs VHP</div><div class="dashboard-arbitrage-value dashboard-arbitrage-{"positive" if arbitragem_vhp and arbitragem_vhp > 0 else "negative"}">{fmt_br(arbitragem_vhp)} c/lb</div></div>' if arbitragem_vhp is not None else ''}
-                            </div>
-                            """, unsafe_allow_html=True)
+                                {arbitragem_html}
+                            </div>'''
+                            
+                            st.markdown(card_html, unsafe_allow_html=True)
         
         if max_cristal:
             melhor = next((d for d in dashboard_data_filtrado if d['Cristal R$/saca PVU'] == max_cristal), None)
