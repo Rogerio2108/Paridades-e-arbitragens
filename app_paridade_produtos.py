@@ -1692,6 +1692,99 @@ if dashboard_data:
     # CSS Dashboard Comercial Profissional - Visual Clean e Focado em Tomada de Decisão
     st.markdown("""
     <style>
+    /* Ticker Animado */
+    @keyframes ticker-scroll {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+    
+    .ticker-container {
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        border: 2px solid rgba(16, 185, 129, 0.4);
+        border-radius: 12px;
+        padding: 1.25rem;
+        margin: 2rem 0;
+        overflow: hidden;
+        position: relative;
+        box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.4);
+    }
+    
+    .ticker-container::before {
+        content: '📊 TOP PRODUTOS';
+        position: absolute;
+        left: 1.25rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #10b981;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        z-index: 20;
+        box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4);
+    }
+    
+    .ticker-content {
+        display: flex;
+        animation: ticker-scroll 40s linear infinite;
+        white-space: nowrap;
+        margin-left: 140px;
+    }
+    
+    .ticker-item {
+        display: inline-flex;
+        align-items: center;
+        margin-right: 4rem;
+        padding: 0.6rem 1.5rem;
+        background: rgba(16, 185, 129, 0.15);
+        border-radius: 25px;
+        border: 1px solid rgba(16, 185, 129, 0.4);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .ticker-item:hover {
+        background: rgba(16, 185, 129, 0.25);
+        transform: scale(1.05);
+    }
+    
+    .ticker-item-name {
+        font-weight: 700;
+        color: #10b981;
+        margin-right: 1rem;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .ticker-item-value {
+        font-weight: 800;
+        color: #ffffff;
+        font-size: 1.15rem;
+    }
+    
+    /* Estilos para tabela de ranking */
+    .dataframe {
+        font-size: 0.9rem;
+    }
+    
+    .dataframe thead th {
+        background: #1e293b !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 2px solid #10b981 !important;
+    }
+    
+    .dataframe tbody tr:hover {
+        background: rgba(16, 185, 129, 0.1) !important;
+    }
+    
+    /* Cards profissionais */
     /* Estilos globais */
     .main .block-container {
         padding-top: 2rem;
@@ -1931,121 +2024,166 @@ if dashboard_data:
     </style>
     """, unsafe_allow_html=True)
     
-    # Cards principais - Top produtos por categoria
-    st.markdown("### 🎯 Resumo Executivo - Paridades de Produtos")
-    st.caption("Visualização comparativa dos produtos com melhor paridade. Os valores são equivalentes em Açúcar VHP (R$/saca na Porta da Usina).")
+    # ========================================================================
+    # DASHBOARD COMERCIAL PROFISSIONAL
+    # ========================================================================
     
-    # Explicação sobre Arbitragem Implícita
-    with st.expander("ℹ️ O que é Arbitragem Implícita?", expanded=False):
-        st.markdown("""
-        **Arbitragem Implícita** representa a diferença entre o equivalente em **Cristal** e **VHP** (em c/lb).
-        
-        - **Valor positivo (verde)**: O Cristal vale mais que o VHP, indicando oportunidade de transformação
-        - **Valor negativo (vermelho)**: O VHP vale mais que o Cristal
-        
-        Esta métrica ajuda a identificar qual produto é mais vantajoso produzir.
-        """)
-    
-    # Filtro de produtos
+    # Prepara dados para o dashboard
     todos_produtos = [d['Produto'] for d in dashboard_data]
     produtos_filtrados = st.multiselect(
-        "🔍 Filtrar Produtos (deixe vazio para mostrar todos)",
+        "🔍 Filtrar Produtos",
         options=todos_produtos,
         default=todos_produtos,
-        help="Selecione os produtos que deseja visualizar. Remova os produtos que não quer comparar."
+        help="Selecione os produtos que deseja visualizar."
     )
     
-    # Filtra os dados baseado na seleção
     if produtos_filtrados:
         dashboard_data_filtrado = [d for d in dashboard_data if d['Produto'] in produtos_filtrados]
     else:
         dashboard_data_filtrado = dashboard_data
-        st.info("ℹ️ Selecione pelo menos um produto para visualizar")
     
-    # Encontra os melhores valores (com filtro)
     vhp_saca_list = [(d['Produto'], d['VHP R$/saca PVU']) for d in dashboard_data_filtrado if d['VHP R$/saca PVU'] is not None]
     cristal_saca_list = [(d['Produto'], d['Cristal R$/saca PVU']) for d in dashboard_data_filtrado if d['Cristal R$/saca PVU'] is not None]
     
-    # Top produtos VHP (usando dados filtrados) - Layout otimizado para tela grande
+    # ========================================================================
+    # TICKER ANIMADO - PRINCIPAIS PRODUTOS
+    # ========================================================================
     if vhp_saca_list:
-        vhp_saca_list_sorted = sorted(vhp_saca_list, key=lambda x: x[1], reverse=True)
-        # Mostra até 6 produtos em tela grande (2 linhas de 3 colunas)
-        top_vhp = vhp_saca_list_sorted[:6]
+        vhp_sorted = sorted(vhp_saca_list, key=lambda x: x[1], reverse=True)
+        top_5_ticker = vhp_sorted[:5]
         
-        # Organiza em grid de 3 colunas
-        num_cols = 3
-        rows = [top_vhp[i:i+num_cols] for i in range(0, len(top_vhp), num_cols)]
+        ticker_items = []
+        for produto, valor in top_5_ticker:
+            ticker_items.append(f'<div class="ticker-item"><span class="ticker-item-name">{produto}</span><span class="ticker-item-value">R$ {fmt_br(valor)}/saca</span></div>')
         
-        for row_idx, row in enumerate(rows):
-            cols = st.columns(num_cols)
-            # Cores baseadas na posição geral (não apenas na linha)
-            global_idx = row_idx * num_cols
-            for col_idx, (produto, valor) in enumerate(row):
-                if col_idx < len(cols):
-                    # Encontra dados completos do produto
-                    produto_data = next((d for d in dashboard_data_filtrado if d['Produto'] == produto), None)
-                    if produto_data:
-                        with cols[col_idx]:
-                            # Calcula arbitragem (diferença entre VHP e Cristal se disponível) em c/lb
-                            arbitragem = None
-                            if produto_data['Cristal c/lb PVU'] is not None and produto_data['VHP c/lb PVU'] is not None:
-                                arbitragem = produto_data['Cristal c/lb PVU'] - produto_data['VHP c/lb PVU']
-                            
-                            # Atribui cor baseada na posição geral: melhor = verde, outros = cores alternadas
-                            current_idx = global_idx + col_idx
-                            if current_idx == 0:
-                                color_class = 'green'
-                            elif current_idx == 1:
-                                color_class = 'orange'
-                            elif current_idx == 2:
-                                color_class = 'blue'
-                            elif current_idx == 3:
-                                color_class = 'purple'
-                            elif current_idx == 4:
-                                color_class = 'yellow'
-                            else:
-                                color_class = 'blue'
-                            
-                            # Badge de posição
-                            if current_idx == 0:
-                                position_badge = '<div class="best-indicator">🏆 Melhor</div>'
-                            elif current_idx < 3:
-                                position_badge = f'<div class="position-badge">#{current_idx + 1}</div>'
-                            else:
-                                position_badge = ''
-                            
-                            # HTML da arbitragem (se disponível)
-                            arbitragem_html = ''
-                            if arbitragem is not None:
-                                arbitragem_class = 'positive' if arbitragem > 0 else 'negative'
-                                arbitragem_html = f'''<div class="dashboard-arbitrage">
-                                    <div class="dashboard-arbitrage-label">Arbitragem Implícita</div>
-                                    <div class="dashboard-arbitrage-value dashboard-arbitrage-{arbitragem_class}">{fmt_br(arbitragem)} c/lb</div>
-                                </div>'''
-                            
-                            card_html = f'''<div class="dashboard-card dashboard-card-{color_class}">
-                                {position_badge}
-                                <div class="dashboard-title">{produto}</div>
-                                <div class="dashboard-price">R$ {fmt_br(valor)}</div>
-                                <div class="dashboard-metric">
-                                    <span class="dashboard-metric-label">PVU:</span>
-                                    <span class="dashboard-metric-value">{fmt_br(produto_data['VHP c/lb PVU'])} c/lb</span>
-                                </div>
-                                <div class="dashboard-metric">
-                                    <span class="dashboard-metric-label">FOB:</span>
-                                    <span class="dashboard-metric-value">{fmt_br(produto_data['VHP c/lb FOB'])} c/lb</span>
-                                </div>
-                                {arbitragem_html}
-                            </div>'''
-                            
-                            st.markdown(card_html, unsafe_allow_html=True)
+        # Duplica para loop infinito
+        ticker_content = ''.join(ticker_items * 2)
+        
+        st.markdown(f'''
+        <div class="ticker-container">
+            <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 50px; background: linear-gradient(90deg, #1e293b, transparent); z-index: 10;"></div>
+            <div style="position: absolute; right: 0; top: 0; bottom: 0; width: 50px; background: linear-gradient(90deg, transparent, #1e293b); z-index: 10;"></div>
+            <div class="ticker-content">
+                {ticker_content}
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
+    
+    # ========================================================================
+    # RANKING DINÂMICO - TOP 3 PRODUTOS
+    # ========================================================================
+    if vhp_saca_list:
+        st.markdown("### 🏆 Ranking - Top Produtos por Paridade")
+        
+        vhp_sorted = sorted(vhp_saca_list, key=lambda x: x[1], reverse=True)
+        top_3 = vhp_sorted[:3]
+        
+        cols = st.columns(3)
+        for idx, (produto, valor) in enumerate(top_3):
+            produto_data = next((d for d in dashboard_data_filtrado if d['Produto'] == produto), None)
+            if produto_data:
+                with cols[idx]:
+                    # Calcula arbitragem
+                    arbitragem = None
+                    if produto_data.get('Cristal c/lb PVU') and produto_data.get('VHP c/lb PVU'):
+                        arbitragem = produto_data['Cristal c/lb PVU'] - produto_data['VHP c/lb PVU']
+                    
+                    # Cores e badges
+                    if idx == 0:
+                        border_color = '#10b981'
+                        bg_gradient = 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(30, 41, 59, 0.95) 100%)'
+                        badge = '<div style="position: absolute; top: 1rem; right: 1rem; background: #10b981; color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">🏆 #1</div>'
+                    elif idx == 1:
+                        border_color = '#f59e0b'
+                        bg_gradient = 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(30, 41, 59, 0.95) 100%)'
+                        badge = '<div style="position: absolute; top: 1rem; right: 1rem; background: #f59e0b; color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">#2</div>'
+                    else:
+                        border_color = '#3b82f6'
+                        bg_gradient = 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(30, 41, 59, 0.95) 100%)'
+                        badge = '<div style="position: absolute; top: 1rem; right: 1rem; background: #3b82f6; color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">#3</div>'
+                    
+                    # Arbitragem HTML
+                    arbitragem_html = ''
+                    if arbitragem is not None:
+                        arbitragem_color = '#10b981' if arbitragem > 0 else '#ef4444'
+                        arbitragem_arrow = '↑' if arbitragem > 0 else '↓'
+                        arbitragem_html = f'''
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                            <div style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px;">Arbitragem</div>
+                            <div style="font-size: 1rem; font-weight: 700; color: {arbitragem_color};">
+                                {arbitragem_arrow} {fmt_br(arbitragem)} c/lb
+                            </div>
+                        </div>'''
+                    
+                    card_html = f'''
+                    <div style="background: {bg_gradient}; border-left: 4px solid {border_color}; border-radius: 8px; padding: 1.5rem; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 1rem;">
+                        {badge}
+                        <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">{produto}</div>
+                        <div style="font-size: 2rem; font-weight: 800; color: #ffffff; margin: 0.75rem 0; line-height: 1.2;">R$ {fmt_br(valor)}</div>
+                        <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem; font-style: italic;">Equivalente VHP (R$/saca PVU)</div>
+                        <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;">
+                            <span style="color: #94a3b8;">PVU:</span>
+                            <span style="color: #ffffff; font-weight: 600;">{fmt_br(produto_data.get('VHP c/lb PVU', 0))} c/lb</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;">
+                            <span style="color: #94a3b8;">FOB:</span>
+                            <span style="color: #ffffff; font-weight: 600;">{fmt_br(produto_data.get('VHP c/lb FOB', 0))} c/lb</span>
+                        </div>
+                        {arbitragem_html}
+                    </div>
+                    '''
+                    
+                    st.markdown(card_html, unsafe_allow_html=True)
     
     st.markdown("---")
     
-    # Gráfico ranqueado - VHP
+    # ========================================================================
+    # RANKING COMPLETO - TABELA DINÂMICA
+    # ========================================================================
     if vhp_saca_list:
-        st.markdown("### 📈 Ranking - Equivalente VHP R$/saca PVU")
-        st.caption("💡 Este gráfico mostra quanto cada produto vale quando convertido para equivalente em **Açúcar VHP** (em R$/saca na Porta da Usina)")
+        st.markdown("### 📊 Ranking Completo de Produtos")
+        
+        # Cria DataFrame para ranking
+        ranking_data = []
+        for produto, valor in sorted(vhp_saca_list, key=lambda x: x[1], reverse=True):
+            produto_data = next((d for d in dashboard_data_filtrado if d['Produto'] == produto), None)
+            if produto_data:
+                ranking_data.append({
+                    'Posição': len(ranking_data) + 1,
+                    'Produto': produto,
+                    'Paridade (R$/saca)': valor,
+                    'PVU (c/lb)': produto_data.get('VHP c/lb PVU', 0),
+                    'FOB (c/lb)': produto_data.get('VHP c/lb FOB', 0),
+                    'Tipo': produto_data.get('Tipo', 'N/A')
+                })
+        
+        if ranking_data:
+            df_ranking = pd.DataFrame(ranking_data)
+            
+            # Estiliza a tabela
+            def highlight_best(row):
+                if row['Posição'] == 1:
+                    return ['background-color: rgba(16, 185, 129, 0.2); font-weight: 700;'] * len(row)
+                elif row['Posição'] <= 3:
+                    return ['background-color: rgba(245, 158, 11, 0.1);'] * len(row)
+                return [''] * len(row)
+            
+            styled_df = df_ranking.style.apply(highlight_best, axis=1).format({
+                'Paridade (R$/saca)': '{:,.2f}',
+                'PVU (c/lb)': '{:,.2f}',
+                'FOB (c/lb)': '{:,.2f}'
+            }).hide_index()
+            
+            st.dataframe(styled_df, use_container_width=True, height=400)
+    
+    st.markdown("---")
+    
+    # ========================================================================
+    # GRÁFICOS VISUAIS
+    # ========================================================================
+    if vhp_saca_list:
+        st.markdown("### 📈 Visualização Gráfica - Ranking VHP")
+        st.caption("Comparação visual dos produtos por equivalente em Açúcar VHP")
         vhp_saca_list.sort(key=lambda x: x[1], reverse=True)
         
         # Cria DataFrame para o gráfico com informações de tipo
@@ -2145,27 +2283,37 @@ if dashboard_data:
                             color = 'orange'
                         
                         with cols[col_idx]:
-                            # Badge de melhor opção
+                            # Define cores e gradientes
                             if is_best:
-                                position_badge = '<div class="best-indicator">🏆 Melhor</div>'
+                                border_color = '#10b981'
+                                bg_gradient = 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(30, 41, 59, 0.95) 100%)'
+                                badge = '<div style="position: absolute; top: 1rem; right: 1rem; background: #10b981; color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">🏆 Melhor</div>'
+                            elif color == 'blue':
+                                border_color = '#3b82f6'
+                                bg_gradient = 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(30, 41, 59, 0.95) 100%)'
+                                badge = ''
                             else:
-                                position_badge = ''
+                                border_color = '#f59e0b'
+                                bg_gradient = 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(30, 41, 59, 0.95) 100%)'
+                                badge = ''
                             
-                            card_html = f'''<div class="dashboard-card dashboard-card-{color}">
-                                {position_badge}
-                                <div class="dashboard-title">{produto}</div>
+                            card_html = f'''
+                            <div style="background: {bg_gradient}; border-left: 4px solid {border_color}; border-radius: 8px; padding: 1.5rem; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 1rem;">
+                                {badge}
+                                <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">{produto}</div>
                                 <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">EQUIVALENTE VHP</div>
-                                <div class="dashboard-price">R$ {fmt_br(valor)}</div>
+                                <div style="font-size: 2rem; font-weight: 800; color: #ffffff; margin: 0.75rem 0; line-height: 1.2;">R$ {fmt_br(valor)}</div>
                                 <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem; font-style: italic;">Equivalente em Açúcar VHP (R$/saca PVU)</div>
-                                <div class="dashboard-metric">
-                                    <span class="dashboard-metric-label">VHP PVU:</span>
-                                    <span class="dashboard-metric-value">{fmt_br(produto_data['VHP c/lb PVU'])} c/lb</span>
+                                <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;">
+                                    <span style="color: #94a3b8;">VHP PVU:</span>
+                                    <span style="color: #ffffff; font-weight: 600;">{fmt_br(produto_data.get('VHP c/lb PVU', 0))} c/lb</span>
                                 </div>
-                                <div class="dashboard-metric">
-                                    <span class="dashboard-metric-label">VHP FOB:</span>
-                                    <span class="dashboard-metric-value">{fmt_br(produto_data['VHP c/lb FOB'])} c/lb</span>
+                                <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;">
+                                    <span style="color: #94a3b8;">VHP FOB:</span>
+                                    <span style="color: #ffffff; font-weight: 600;">{fmt_br(produto_data.get('VHP c/lb FOB', 0))} c/lb</span>
                                 </div>
-                            </div>'''
+                            </div>
+                            '''
                             
                             st.markdown(card_html, unsafe_allow_html=True)
         
@@ -2282,37 +2430,51 @@ if dashboard_data:
                             if produto_data['VHP c/lb PVU'] is not None and produto_data['Cristal c/lb PVU'] is not None:
                                 arbitragem_vhp = produto_data['Cristal c/lb PVU'] - produto_data['VHP c/lb PVU']
                             
-                            # Badge de melhor opção
+                            # Define cores e gradientes
                             if is_best:
-                                position_badge = '<div class="best-indicator">🏆 Melhor</div>'
+                                border_color = '#10b981'
+                                bg_gradient = 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(30, 41, 59, 0.95) 100%)'
+                                badge = '<div style="position: absolute; top: 1rem; right: 1rem; background: #10b981; color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.75rem; font-weight: 700;">🏆 Melhor</div>'
+                            elif color == 'blue':
+                                border_color = '#3b82f6'
+                                bg_gradient = 'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(30, 41, 59, 0.95) 100%)'
+                                badge = ''
                             else:
-                                position_badge = ''
+                                border_color = '#f59e0b'
+                                bg_gradient = 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(30, 41, 59, 0.95) 100%)'
+                                badge = ''
                             
                             # HTML da arbitragem (se disponível)
                             arbitragem_html = ''
                             if arbitragem_vhp is not None:
-                                arbitragem_class = 'positive' if arbitragem_vhp > 0 else 'negative'
-                                arbitragem_html = f'''<div class="dashboard-arbitrage">
-                                    <div class="dashboard-arbitrage-label">Arbitragem: Cristal vs VHP</div>
-                                    <div class="dashboard-arbitrage-value dashboard-arbitrage-{arbitragem_class}">{fmt_br(arbitragem_vhp)} c/lb</div>
+                                arbitragem_color = '#10b981' if arbitragem_vhp > 0 else '#ef4444'
+                                arbitragem_arrow = '↑' if arbitragem_vhp > 0 else '↓'
+                                arbitragem_html = f'''
+                                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                                    <div style="font-size: 0.7rem; color: #94a3b8; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.5px;">Arbitragem: Cristal vs VHP</div>
+                                    <div style="font-size: 1rem; font-weight: 700; color: {arbitragem_color};">
+                                        {arbitragem_arrow} {fmt_br(arbitragem_vhp)} c/lb
+                                    </div>
                                 </div>'''
                             
-                            card_html = f'''<div class="dashboard-card dashboard-card-{color}">
-                                {position_badge}
-                                <div class="dashboard-title">{produto}</div>
+                            card_html = f'''
+                            <div style="background: {bg_gradient}; border-left: 4px solid {border_color}; border-radius: 8px; padding: 1.5rem; position: relative; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3); margin-bottom: 1rem;">
+                                {badge}
+                                <div style="font-size: 0.9rem; font-weight: 700; color: #ffffff; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;">{produto}</div>
                                 <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 0.5rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">EQUIVALENTE CRISTAL</div>
-                                <div class="dashboard-price">R$ {fmt_br(valor)}</div>
+                                <div style="font-size: 2rem; font-weight: 800; color: #ffffff; margin: 0.75rem 0; line-height: 1.2;">R$ {fmt_br(valor)}</div>
                                 <div style="font-size: 0.75rem; color: #64748b; margin-bottom: 1rem; font-style: italic;">Equivalente em Açúcar Cristal (R$/saca PVU)</div>
-                                <div class="dashboard-metric">
-                                    <span class="dashboard-metric-label">Cristal PVU:</span>
-                                    <span class="dashboard-metric-value">{fmt_br(produto_data['Cristal c/lb PVU'])} c/lb</span>
+                                <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;">
+                                    <span style="color: #94a3b8;">Cristal PVU:</span>
+                                    <span style="color: #ffffff; font-weight: 600;">{fmt_br(produto_data.get('Cristal c/lb PVU', 0))} c/lb</span>
                                 </div>
-                                <div class="dashboard-metric">
-                                    <span class="dashboard-metric-label">Cristal FOB:</span>
-                                    <span class="dashboard-metric-value">{fmt_br(produto_data['Cristal c/lb FOB'])} c/lb</span>
+                                <div style="display: flex; justify-content: space-between; margin: 0.5rem 0; font-size: 0.875rem;">
+                                    <span style="color: #94a3b8;">Cristal FOB:</span>
+                                    <span style="color: #ffffff; font-weight: 600;">{fmt_br(produto_data.get('Cristal c/lb FOB', 0))} c/lb</span>
                                 </div>
                                 {arbitragem_html}
-                            </div>'''
+                            </div>
+                            '''
                             
                             st.markdown(card_html, unsafe_allow_html=True)
         
